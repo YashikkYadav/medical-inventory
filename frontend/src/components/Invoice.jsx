@@ -45,6 +45,11 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
       { safeHospitalInfo?.email&& <p>
           email: {safeHospitalInfo.email}
         </p>}
+        { safeHospitalInfo?.regNo && (
+          <p className="mt-1">
+            <strong>Reg No:</strong> {safeHospitalInfo.regNo}
+          </p>
+        )}
         <h2 className="text-lg font-semibold mt-2 underline">Final Bill</h2>
         {billNo && (
           <p className="text-sm mt-1">
@@ -70,18 +75,19 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
           </p>
         </div>
         <div>
-          {safeHospitalInfo.ipd && (
-            <p>
-              <strong>IPD No:</strong> {safeHospitalInfo.ipd}
-            </p>
-          )}
           {billType !== 'medical' && (
             <>
+              <p>
+                <strong>Consultant Name:</strong> {safePatientInfo.consultantName}
+              </p>
               <p>
                 <strong>Admit Date:</strong> {safePatientInfo.admitDate}
               </p>
               <p>
                 <strong>Discharge Date:</strong> {safePatientInfo.dischargeDate}
+              </p>
+              <p>
+                <strong>IPD No:</strong> {safePatientInfo.ipdNo}
               </p>
             </>
           )}
@@ -102,9 +108,11 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
           {safeCharges.map((item, index) => (
             <tr key={index}>
               <td className="border px-2 py-1">{index + 1}</td>
-              <td className="border px-2 py-1 text-left">{item.name}</td>
-              <td className="border px-2 py-1">{item.qty}</td>
-              <td className="border px-2 py-1 text-right">{item.amount}</td>
+              <td className="border px-2 py-1 text-left">
+                {item.name ? (typeof item.name === 'object' ? item.name.name : item.name) : 'Service/Charge'}
+              </td>
+              <td className="border px-2 py-1">{item.qty || 0}</td>
+              <td className="border px-2 py-1 text-right">{item.amount || 0}</td>
             </tr>
           ))}
         </tbody>
@@ -113,32 +121,32 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
       {/* Summary Section */}
       <div className="mt-3 text-right">
         <p>
-          <strong>Total Bill Amount:</strong> ₹{safeSummary.total}
+          <strong>Total Bill Amount:</strong> ₹{safeSummary.total || 0}
         </p>
         <p>
-          <strong>Less - Advance:</strong> ₹{safeSummary.advance}
+          <strong>Less - Advance:</strong> ₹{safeSummary.advance || 0}
         </p>
         <p>
-          <strong>Less - Discount:</strong> ₹{safeSummary.discount}
+          <strong>Less - Discount:</strong> ₹{safeSummary.discount || 0}
         </p>
         <p className="font-bold text-base border-t mt-1 pt-1">
-          Balance to be Paid: ₹{safeSummary.balance}
+          Balance to be Paid: ₹{safeSummary.balance || 0}
         </p>
       </div>
 
       {/* Payment Details */}
       <div className="mt-4 border-t pt-2 text-sm">
         <p>
-          <strong>Payment Mode:</strong> {safePayment.mode}
+          <strong>Payment Mode:</strong> {safePayment.mode || 'Cash'}
         </p>
         <p>
-          <strong>Amount Paid:</strong> ₹{safePayment.amount}
+          <strong>Amount Paid:</strong> ₹{safePayment.amount || 0}
         </p>
         <p>
-          <strong>Date:</strong> {safePayment.date}
+          <strong>Date:</strong> {safePayment.date || ''}
         </p>
         <p className="italic mt-2">
-          (Rupees {safePayment.amountInWords} Only)
+          (Rupees {safePayment.amountInWords || ''} Only)
         </p>
       </div>
 

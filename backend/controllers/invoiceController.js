@@ -28,37 +28,37 @@ const getInvoice = asyncHandler(async (req, res) => {
 // @route   POST /api/invoices
 // @access  Public
 const createInvoice = asyncHandler(async (req, res) => {
-  const { customerName, customerContact, items, discount = 0, tax = 0 } = req.body;
+  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, items, discount = 0, tax = 0, billType = 'medical', amountInWords } = req.body;
 
-  // Validate items
-  if (!items || items.length === 0) {
-    res.status(400);
-    throw new Error('At least one item is required');
-  }
-
-  // Calculate totals
+  // Allow invoices without items for hospital bills
   let totalAmount = 0;
   
-  // Validate each item and calculate total
-  for (const item of items) {
-    const medicine = await Medicine.findById(item.medicine);
-    
-    if (!medicine) {
-      res.status(404);
-      throw new Error(`Medicine with ID ${item.medicine} not found`);
+  // Only validate items if they exist
+  if (items && items.length > 0) {
+    // Validate each item and calculate total
+    for (const item of items) {
+      // If medicine is provided, validate it
+      if (item.medicine) {
+        const medicine = await Medicine.findById(item.medicine);
+        
+        if (!medicine) {
+          res.status(404);
+          throw new Error(`Medicine with ID ${item.medicine} not found`);
+        }
+        
+        // Check if enough quantity is available
+        if (medicine.quantity < item.quantity) {
+          res.status(400);
+          throw new Error(`Not enough quantity for ${medicine.name}. Available: ${medicine.quantity}, Requested: ${item.quantity}`);
+        }
+        
+        // Update medicine quantity
+        medicine.quantity -= item.quantity;
+        await medicine.save();
+      }
+      
+      totalAmount += (item.price || 0) * (item.quantity || 0);
     }
-    
-    // Check if enough quantity is available
-    if (medicine.quantity < item.quantity) {
-      res.status(400);
-      throw new Error(`Not enough quantity for ${medicine.name}. Available: ${medicine.quantity}, Requested: ${item.quantity}`);
-    }
-    
-    // Update medicine quantity
-    medicine.quantity -= item.quantity;
-    await medicine.save();
-    
-    totalAmount += item.price * item.quantity;
   }
   
   const grandTotal = totalAmount - discount + tax;
@@ -66,17 +66,29 @@ const createInvoice = asyncHandler(async (req, res) => {
   const invoice = new Invoice({
     customerName,
     customerContact,
-    items,
+    patientAge,
+    patientSex,
+    patientAddress,
+    consultantName,
+    admitDate,
+    dischargeDate,
+    ipdNo,
+    billType,
+    items: items || [],
     totalAmount,
     discount,
     tax,
-    grandTotal
+    grandTotal,
+    amountInWords
   });
 
   const createdInvoice = await invoice.save();
   
-  // Populate medicine details before sending response
-  const populatedInvoice = await Invoice.findById(createdInvoice._id).populate('items.medicine');
+  // Populate medicine details before sending response (only if items exist)
+  let populatedInvoice = createdInvoice;
+  if (items && items.length > 0) {
+    populatedInvoice = await Invoice.findById(createdInvoice._id).populate('items.medicine');
+  }
   
   res.status(201).json(populatedInvoice);
 });
@@ -85,7 +97,7 @@ const createInvoice = asyncHandler(async (req, res) => {
 // @route   PUT /api/invoices/:id
 // @access  Public
 const updateInvoice = asyncHandler(async (req, res) => {
-  const { customerName, customerContact, items, discount, tax } = req.body;
+  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, items, discount, tax, billType, amountInWords } = req.body;
 
   const invoice = await Invoice.findById(req.params.id);
 
@@ -96,36 +108,43 @@ const updateInvoice = asyncHandler(async (req, res) => {
 
   // If items are being updated, we need to adjust medicine quantities
   if (items) {
-    // First, restore the quantities of the original items
+    // First, restore the quantities of the original items (only if they had medicine)
     for (const originalItem of invoice.items) {
-      const medicine = await Medicine.findById(originalItem.medicine);
-      if (medicine) {
-        medicine.quantity += originalItem.quantity;
-        await medicine.save();
+      if (originalItem.medicine) {
+        const medicine = await Medicine.findById(originalItem.medicine);
+        if (medicine) {
+          medicine.quantity += originalItem.quantity;
+          await medicine.save();
+        }
       }
     }
     
-    // Then, reduce quantities for the new items
+    // Then, reduce quantities for the new items (only if they have medicine)
     let totalAmount = 0;
-    for (const item of items) {
-      const medicine = await Medicine.findById(item.medicine);
-      
-      if (!medicine) {
-        res.status(404);
-        throw new Error(`Medicine with ID ${item.medicine} not found`);
+    if (items.length > 0) {
+      for (const item of items) {
+        // Only validate medicine if it's provided
+        if (item.medicine) {
+          const medicine = await Medicine.findById(item.medicine);
+          
+          if (!medicine) {
+            res.status(404);
+            throw new Error(`Medicine with ID ${item.medicine} not found`);
+          }
+          
+          // Check if enough quantity is available
+          if (medicine.quantity < item.quantity) {
+            res.status(400);
+            throw new Error(`Not enough quantity for ${medicine.name}. Available: ${medicine.quantity}, Requested: ${item.quantity}`);
+          }
+          
+          // Update medicine quantity
+          medicine.quantity -= item.quantity;
+          await medicine.save();
+        }
+        
+        totalAmount += (item.price || 0) * (item.quantity || 0);
       }
-      
-      // Check if enough quantity is available
-      if (medicine.quantity < item.quantity) {
-        res.status(400);
-        throw new Error(`Not enough quantity for ${medicine.name}. Available: ${medicine.quantity}, Requested: ${item.quantity}`);
-      }
-      
-      // Update medicine quantity
-      medicine.quantity -= item.quantity;
-      await medicine.save();
-      
-      totalAmount += item.price * item.quantity;
     }
     
     invoice.totalAmount = totalAmount;
@@ -136,7 +155,7 @@ const updateInvoice = asyncHandler(async (req, res) => {
       let totalAmount = 0;
       
       for (const item of invoice.items) {
-        totalAmount += item.price * item.quantity;
+        totalAmount += (item.price || 0) * (item.quantity || 0);
       }
       
       invoice.totalAmount = totalAmount;
@@ -146,14 +165,29 @@ const updateInvoice = asyncHandler(async (req, res) => {
 
   invoice.customerName = customerName || invoice.customerName;
   invoice.customerContact = customerContact || invoice.customerContact;
-  invoice.items = items || invoice.items;
+  invoice.patientAge = patientAge !== undefined ? patientAge : invoice.patientAge;
+  invoice.patientSex = patientSex !== undefined ? patientSex : invoice.patientSex;
+  invoice.patientAddress = patientAddress !== undefined ? patientAddress : invoice.patientAddress;
+  invoice.consultantName = consultantName !== undefined ? consultantName : invoice.consultantName;
+  invoice.admitDate = admitDate !== undefined ? admitDate : invoice.admitDate;
+  invoice.dischargeDate = dischargeDate !== undefined ? dischargeDate : invoice.dischargeDate;
+  invoice.ipdNo = ipdNo !== undefined ? ipdNo : invoice.ipdNo;
+  invoice.billType = billType !== undefined ? billType : invoice.billType;
+  invoice.items = items !== undefined ? items : invoice.items;
   invoice.discount = discount !== undefined ? discount : invoice.discount;
   invoice.tax = tax !== undefined ? tax : invoice.tax;
+  invoice.amountInWords = amountInWords !== undefined ? amountInWords : invoice.amountInWords;
 
   const updatedInvoice = await invoice.save();
   
-  // Populate medicine details before sending response
-  const populatedInvoice = await Invoice.findById(updatedInvoice._id).populate('items.medicine');
+  // Populate medicine details before sending response (only if items exist and have medicine)
+  let populatedInvoice = updatedInvoice;
+  if (updatedInvoice.items && updatedInvoice.items.length > 0) {
+    const hasMedicineItems = updatedInvoice.items.some(item => item.medicine);
+    if (hasMedicineItems) {
+      populatedInvoice = await Invoice.findById(updatedInvoice._id).populate('items.medicine');
+    }
+  }
   
   res.status(200).json(populatedInvoice);
 });
@@ -169,12 +203,14 @@ const deleteInvoice = asyncHandler(async (req, res) => {
     throw new Error('Invoice not found');
   }
 
-  // Restore medicine quantities when deleting an invoice
+  // Restore medicine quantities when deleting an invoice (only for items that have medicine)
   for (const item of invoice.items) {
-    const medicine = await Medicine.findById(item.medicine);
-    if (medicine) {
-      medicine.quantity += item.quantity;
-      await medicine.save();
+    if (item.medicine) {
+      const medicine = await Medicine.findById(item.medicine);
+      if (medicine) {
+        medicine.quantity += item.quantity;
+        await medicine.save();
+      }
     }
   }
 

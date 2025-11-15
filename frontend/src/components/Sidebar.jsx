@@ -1,20 +1,27 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaBoxes, FaReceipt } from 'react-icons/fa';
+import { FaBoxes, FaReceipt, FaConciergeBell, FaServicestack, FaTools } from 'react-icons/fa';
+import { MdDashboard } from "react-icons/md";
 
 const Sidebar = () => {
   const location = useLocation();
 
   const navItems = [
-    {
-      name: 'Dashboard',
-      path: '/dashboard',
-      icon: <FaBoxes />
-    },
+   
+{
+  name: 'Dashboard',
+  path: '/dashboard',
+  icon: <MdDashboard />
+},
     {
       name: 'Inventory',
       path: '/dashboard/inventory',
       icon: <FaBoxes />
+    },
+    {
+      name: 'Services',
+      path: '/dashboard/services',
+      icon: <FaTools />
     },
     {
       name: 'Billing',

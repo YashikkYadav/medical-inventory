@@ -46,6 +46,7 @@ app.use(requestLogger);
 app.use('/api/medicines', require('./routes/medicineRoutes'));
 app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/services', require('./routes/serviceRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'API Running...' });

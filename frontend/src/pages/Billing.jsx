@@ -2,7 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import Invoice from '../components/Invoice';
 import { ToWords } from 'to-words';
 import { getMedicines } from '../apis/medicineApi';
+import { getServices } from '../apis/serviceApi';  // Add this import
 import { createInvoice, getInvoices } from '../apis/invoiceApi';
+import HospitalServiceInput from '../components/HospitalServiceInput';
+import MedicalMedicineInput from '../components/MedicalMedicineInput';
+import { toast, Toaster } from 'react-hot-toast'; // Add toast import
 
 const toWords = new ToWords({
   localeCode: 'en-IN',
@@ -18,6 +22,7 @@ const Billing = () => {
   const [bills, setBills] = useState([]);
   const [currentBill, setCurrentBill] = useState(null);
   const [medicines, setMedicines] = useState([]);
+  const [services, setServices] = useState([]);  // Add this line
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownIndex, setDropdownIndex] = useState(null);
   const invoiceRef = useRef(null); // Add ref for invoice printing
@@ -60,6 +65,31 @@ const Billing = () => {
       }
     };
     
+    const fetchServices = async () => {  // Add this function
+      // Try to get services from sessionStorage first
+      const sessionServices = sessionStorage.getItem('services');
+      if (sessionServices) {
+        try {
+          const parsedServices = JSON.parse(sessionServices);
+          setServices(parsedServices);
+          return;
+        } catch (sessionError) {
+          console.error('Error parsing services from sessionStorage:', sessionError);
+        }
+      }
+      
+      // Fallback to API if sessionStorage is empty
+      try {
+        const servicesData = await getServices();
+        setServices(servicesData);
+        // Update sessionStorage
+        sessionStorage.setItem('services', JSON.stringify(servicesData));
+      } catch (error) {
+        console.error('Error fetching services:', error);
+        setServices([]);
+      }
+    };
+    
     const fetchBills = async () => {
       // Try to get bills from sessionStorage first
       const sessionBills = sessionStorage.getItem('bills');
@@ -81,20 +111,22 @@ const Billing = () => {
         const transformedBills = billsData.map(invoice => ({
           id: invoice._id,
           billNo: `INV-${invoice._id.substr(-6)}`,
-          billType: 'hospital', // Default to hospital
+          billType: invoice.billType || 'medical', // Use the billType from invoice data
           hospitalInfo: {
-            name: "Medicare Hospital",
-            address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
-            phone: "7023314141, 6350283164, 7340306199, 8058280829",
-            email: "medicarehospital14@gmail.com",
+            name: invoice.billType === 'medical' ? medialInfo.name : hospitalInfo.name,
+            address: invoice.billType === 'medical' ? medialInfo.address : hospitalInfo.address,
+            phone: invoice.billType === 'medical' ? medialInfo.phone : hospitalInfo.phone,
+            email: invoice.billType === 'medical' ? "" : hospitalInfo.email,
+            regNo: invoice.billType === 'medical' ? "8BZJPS2130M1ZDm" : "8BZJPS2130M1ZDh"
           },
           patientInfo: {
             name: invoice.customerName || 'Unknown Patient',
-            age: '',
-            sex: '',
-            address: '',
+            age: invoice.patientAge || '', // Add age field
+            sex: invoice.patientSex || '', // Add sex field
+            address: invoice.patientAddress || '', // Add address field
             phone: invoice.customerContact || '',
-            admitDate: new Date(invoice.createdAt).toLocaleString('en-GB', {
+            consultantName: invoice.consultantName || '',
+            admitDate: invoice.admitDate || new Date(invoice.createdAt).toLocaleString('en-GB', {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
@@ -102,7 +134,7 @@ const Billing = () => {
               minute: '2-digit',
               hour12: true
             }),
-            dischargeDate: new Date(invoice.createdAt).toLocaleString('en-GB', {
+            dischargeDate: invoice.dischargeDate || new Date(invoice.createdAt).toLocaleString('en-GB', {
               day: '2-digit',
               month: '2-digit',
               year: 'numeric',
@@ -110,18 +142,19 @@ const Billing = () => {
               minute: '2-digit',
               hour12: true
             }),
+            ipdNo: invoice.ipdNo || '',
           },
           charges: invoice.items.map((item, index) => ({
             id: index + 1,
-            name: item.medicineName || item.medicine || 'Unknown Medicine',
-            qty: item.quantity,
-            amount: item.price
+            name: item.name || item.medicineName || (item.medicine && typeof item.medicine === 'object' ? item.medicine.name : item.medicine) || 'Service/Charge',
+            qty: item.quantity || 0,
+            amount: item.price || 0
           })),
           payment: {
             mode: 'Cash',
             date: new Date(invoice.createdAt).toLocaleDateString('en-GB'),
             amount: invoice.items.reduce((total, item) => total + (item.quantity * item.price), 0),
-            amountInWords: ''
+            amountInWords: invoice.amountInWords || toWords.convert(invoice.items.reduce((total, item) => total + (item.quantity * item.price), 0)) || ''
           },
           summary: {
             total: invoice.items.reduce((total, item) => total + (item.quantity * item.price), 0),
@@ -133,7 +166,7 @@ const Billing = () => {
         
         setBills(transformedBills);
         // Update sessionStorage
-        sessionStorage.setItem('bills', JSON.stringify(transformedBills));
+        sessionStorage.setItem('invoices', JSON.stringify(transformedBills));
         console.log('Loaded bills from API:', transformedBills);
       } catch (error) {
         console.error('Error fetching bills:', error);
@@ -142,48 +175,24 @@ const Billing = () => {
     };
     
     fetchMedicines();
+    fetchServices();  // Add this line
     fetchBills();
     
-    // Load invoices from API
-    const fetchInvoices = async () => {
-      try {
-        // Try to get invoices from sessionStorage first
-        const sessionInvoices = sessionStorage.getItem('invoices');
-        if (sessionInvoices) {
-          try {
-            const parsedInvoices = JSON.parse(sessionInvoices);
-            // You might want to do something with these invoices
-            console.log('Loaded invoices from sessionStorage:', parsedInvoices);
-            return;
-          } catch (sessionError) {
-            console.error('Error parsing invoices from sessionStorage:', sessionError);
-          }
-        }
-        
-        // Fallback to API if sessionStorage is empty
-        const invoicesData = await getInvoices();
-        // Update sessionStorage
-        sessionStorage.setItem('invoices', JSON.stringify(invoicesData));
-        console.log('Loaded invoices from API:', invoicesData);
-      } catch (error) {
-        console.error('Error fetching invoices:', error);
-      }
-    };
-    
-    fetchInvoices();
+    // Remove the duplicate fetchInvoices function as we're already fetching invoices in fetchBills
   }, []);
 
   const medialInfo = {
       name: "Shree Medical And General Store",
       address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
       phone: "7023314141, 6350283164, 7340306199, 8058280829",
+      
     }
   const hospitalInfo = {
-      name: "Medicare Hospital",
-      address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
-      phone: "7023314141, 6350283164, 7340306199, 8058280829",
-      email: "medicarehospital14@gmail.com",
-    }
+    name: "Medicare Hospital",
+    address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
+    phone: "7023314141, 6350283164, 7340306199, 8058280829",
+    email: "medicarehospital14@gmail.com",
+}
   const [formData, setFormData] = useState({
     hospitalInfo: hospitalInfo,
     patientInfo: {
@@ -192,8 +201,10 @@ const Billing = () => {
       sex: "",
       address: "",
       phone: "",
+      consultantName: "",
       admitDate: "",
       dischargeDate: "",
+      ipdNo: "",
       date: new Date().toISOString().split('T')[0],
     },
     charges: [
@@ -203,6 +214,9 @@ const Billing = () => {
         description: "",
         qty: 1,
         amount: 0,
+        filteredMedicines: [],  // Keep this for medical bills
+        filteredServices: [],   // Add this for hospital bills
+        showDropdown: false,    // Add this for dropdown control
         medicineId: null,
       }
     ],
@@ -237,6 +251,26 @@ const Billing = () => {
     });
   };
 
+  // New function to handle custom charges for hospital bills
+  const handleCustomChargeChange = (index, field, value) => {
+    const updatedCharges = [...formData.charges];
+    updatedCharges[index] = {
+      ...updatedCharges[index],
+      [field]: value
+    };
+    
+    // If this is a hospital bill and they're entering a custom charge name,
+    // we don't need to link it to a medicine
+    if (formData.billType === 'hospital') {
+      updatedCharges[index].medicineId = null;
+    }
+    
+    setFormData({
+      ...formData,
+      charges: updatedCharges
+    });
+  };
+
   const handleMedicineSelect = (index, medicine) => {
     const updatedCharges = [...formData.charges];
     updatedCharges[index].name = medicine.name;
@@ -265,7 +299,12 @@ const Billing = () => {
             medicine.name && medicine.name.toLowerCase().includes(value.toLowerCase()) ||
             medicine.composition && medicine.composition.toLowerCase().includes(value.toLowerCase())
           )
-        : medicines
+        : medicines,
+      filteredServices: value.length > 0  // Add this for services
+        ? services.filter(service =>
+            service.name && service.name.toLowerCase().includes(value.toLowerCase())
+          )
+        : services
     };
     
     setFormData({
@@ -279,7 +318,8 @@ const Billing = () => {
     const newCharges = [...formData.charges];
     newCharges[index] = { 
       ...newCharges[index], 
-      filteredMedicines: medicines
+      filteredMedicines: medicines,
+      filteredServices: services  // Add this for services
     };
     
     setFormData({
@@ -299,6 +339,68 @@ const Billing = () => {
     }, 200);
   };
 
+  // Hospital-specific functions
+  const handleServiceSearch = (index, value) => {
+    const newCharges = [...formData.charges];
+    newCharges[index] = { 
+      ...newCharges[index], 
+      name: value,
+      filteredServices: value.length > 0 
+        ? services.filter(service =>
+            service.name && service.name.toLowerCase().includes(value.toLowerCase())
+          )
+        : services
+    };
+    
+    setFormData({
+      ...formData,
+      charges: newCharges
+    });
+  };
+
+  const handleServiceFocus = (index) => {
+    // Show dropdown with all services
+    const newCharges = [...formData.charges];
+    newCharges[index] = { 
+      ...newCharges[index], 
+      filteredServices: services
+    };
+    
+    setFormData({
+      ...formData,
+      charges: newCharges
+    });
+    
+    setShowDropdown(true);
+    setDropdownIndex(index);
+  };
+
+  const handleServiceBlur = () => {
+    // Delay closing dropdown to allow click on items
+    setTimeout(() => {
+      setShowDropdown(false);
+      setDropdownIndex(null);
+    }, 200);
+  };
+
+  const handleServiceSelect = (index, service) => {
+    const updatedCharges = [...formData.charges];
+    updatedCharges[index].name = service.name;
+    updatedCharges[index].amount = parseFloat(service.price) || 0;
+    updatedCharges[index].medicineId = null; // No medicine ID for services
+    setFormData({
+      ...formData,
+      charges: updatedCharges
+    });
+    
+    // Close dropdown
+    setShowDropdown(false);
+    setDropdownIndex(null);
+    
+    // Add a new blank item when selecting a service
+    addChargeRow();
+  };
+
   const addChargeRow = () => {
     setFormData({
       ...formData,
@@ -311,6 +413,8 @@ const Billing = () => {
           qty: 1, 
           amount: 0,
           filteredMedicines: [],
+          filteredServices: [],  // Add this line
+          showDropdown: false,   // Add this line
           medicineId: null
         }
       ]
@@ -327,7 +431,7 @@ const Billing = () => {
   };
 
   const calculateSummary = () => {
-    const total = formData.charges.reduce((sum, charge) => sum + (charge.qty * charge.amount), 0);
+    const total = formData.charges.reduce((sum, charge) => sum + ((charge.qty || 0) * (charge.amount || 0)), 0);
     const discount = parseFloat(formData.discount) || 0;
     const advance = parseFloat(formData.advance) || 0;
     const balance = total - discount - advance;
@@ -348,13 +452,23 @@ const Billing = () => {
       const invoiceData = {
         customerName: formData.patientInfo.name,
         customerContact: formData.patientInfo.phone,
+        patientAge: formData.patientInfo.age, // Add patient age
+        patientSex: formData.patientInfo.sex, // Add patient sex
+        patientAddress: formData.patientInfo.address, // Add patient address
+        consultantName: formData.patientInfo.consultantName,
+        admitDate: formData.patientInfo.admitDate,
+        dischargeDate: formData.patientInfo.dischargeDate,
+        ipdNo: formData.patientInfo.ipdNo,
+        billType: formData.billType || 'medical', // Add billType to differentiate hospital and medical bills
         items: formData.charges.map(charge => ({
-          medicine: charge.medicineId, // We'll need to store medicine IDs in the charges
+          medicine: charge.medicineId, // This can be null for hospital bills
           quantity: parseInt(charge.qty) || 0,
-          price: parseFloat(charge.amount) || 0
-        })).filter(item => item.medicine), // Filter out items without medicine
+          price: parseFloat(charge.amount) || 0,
+          name: charge.name || '' // Include the service name for hospital bills
+        })).filter(item => item.quantity > 0), // Only include items with quantity > 0
         discount: parseFloat(formData.discount) || 0,
-        tax: 0 // You might want to add tax field to the form
+        tax: 0, // You might want to add tax field to the form
+        amountInWords: formData.payment.amountInWords || '' // Add amountInWords to the invoice data
       };
       
       // Create invoice via API
@@ -363,7 +477,7 @@ const Billing = () => {
       // Transform the created invoice to bill format
       const newBill = {
         id: createdInvoice._id || Date.now(),
-        billNo: createdInvoice._id ? `INV-${createdInvoice._id.substr(-6)}` : `BILL-${Date.now()}`,
+        billNo: `INV-${Date.now()}`,
         billType: formData.billType || 'hospital',
         hospitalInfo: formData.hospitalInfo || {
           name: "Medicare Hospital",
@@ -377,28 +491,16 @@ const Billing = () => {
           sex: formData.patientInfo.sex || '',
           address: formData.patientInfo.address || '',
           phone: createdInvoice.customerContact || formData.patientInfo.phone || '',
-          admitDate: new Date().toLocaleString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-          }),
-          dischargeDate: new Date().toLocaleString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: true
-          }),
+          consultantName: formData.patientInfo.consultantName || '',
+          admitDate: formData.patientInfo.admitDate || '',
+          dischargeDate: formData.patientInfo.dischargeDate || '',
+          ipdNo: formData.patientInfo.ipdNo || '',
         },
         charges: createdInvoice.items ? createdInvoice.items.map((item, index) => ({
           id: index + 1,
-          name: item.medicineName || 'Unknown Medicine',
-          qty: item.quantity,
-          amount: item.price
+          name: item.name || item.medicineName || (item.medicine && typeof item.medicine === 'object' ? item.medicine.name : item.medicine) || 'Service/Charge',
+          qty: item.quantity || 0,
+          amount: item.price || 0
         })) : formData.charges,
         payment: {
           mode: formData.payment.mode || 'Cash',
@@ -419,15 +521,21 @@ const Billing = () => {
       setBills(updatedBills);
       
       // Save to sessionStorage
-      sessionStorage.setItem('bills', JSON.stringify(updatedBills));
+      sessionStorage.setItem('invoices', JSON.stringify(updatedBills));
       
       setCurrentBill(newBill);
       setShowForm(false);
       
-      // Refresh medicines from API to reflect updated quantities
-      const refreshedMedicines = await getMedicines();
-      setMedicines(refreshedMedicines);
-      sessionStorage.setItem('medicines', JSON.stringify(refreshedMedicines));
+      // Show success toast
+      toast.success(`${formData.billType === 'hospital' ? 'Hospital' : 'Medical'} bill created successfully!`);
+      
+      // Refresh medicines from API to reflect updated quantities (only if we have medicine items)
+      const hasMedicineItems = formData.charges.some(charge => charge.medicineId);
+      if (hasMedicineItems) {
+        const refreshedMedicines = await getMedicines();
+        setMedicines(refreshedMedicines);
+        sessionStorage.setItem('medicines', JSON.stringify(refreshedMedicines));
+      }
       
       // Reset form data to initial state
       setFormData({
@@ -436,7 +544,6 @@ const Billing = () => {
           address: medialInfo.address,
           phone: medialInfo.phone,
           email: "",
-          regNo: "GSTIN: 08BZJPS2130M1ZD"
         } : hospitalInfo,
         patientInfo: {
           name: "",
@@ -444,8 +551,10 @@ const Billing = () => {
           sex: "",
           address: "",
           phone: "",
+          consultantName: "",
           admitDate: "",
           dischargeDate: "",
+          ipdNo: "",
           date: new Date().toISOString().split('T')[0],
         },
         charges: [
@@ -455,6 +564,10 @@ const Billing = () => {
             description: "",
             qty: 1,
             amount: 0,
+            filteredMedicines: [],
+            filteredServices: [],
+            showDropdown: false,
+            medicineId: null,
           }
         ],
         payment: {
@@ -471,7 +584,7 @@ const Billing = () => {
       console.log('Invoice created successfully:', createdInvoice);
     } catch (error) {
       console.error('Error creating invoice:', error);
-      alert('Failed to create invoice: ' + error.message);
+      toast.error('Failed to create bill: ' + error.message);
     }
   };
 
@@ -480,198 +593,8 @@ const Billing = () => {
     if (currentBill && invoiceRef && invoiceRef.current) {
       const printContent = invoiceRef.current;
       
-      // Create a new window for printing with exact styling
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Print Bill</title>
-            <style>
-              @media print {
-                @page {
-                  size: A4;
-                  margin: 0;
-                }
-                body {
-                  margin: 0;
-                  padding: 0;
-                }
-              }
-              body {
-                margin: 0;
-                padding: 20px;
-                font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-                font-size: 0.875rem;
-                line-height: 1.25rem;
-                color: rgba(0, 0, 0, 1);
-              }
-              .invoice-container {
-                max-width: 800px;
-                margin: 0 auto;
-                background: white;
-                padding: 1.5rem;
-               
-              }
-              .max-w-3xl {
-                max-width: 48rem;
-              }
-              .mx-auto {
-                margin-left: auto;
-                margin-right: auto;
-              }
-              .bg-white {
-                background-color: rgba(255, 255, 255, 1);
-              }
-              .shadow-lg {
-              
-              }
-              .border {
-                border: 1px solid rgba(0, 0, 0, 0.1);
-              }
-              .p-6 {
-                padding: 1.5rem;
-              }
-              .text-sm {
-                font-size: 0.875rem;
-                line-height: 1.25rem;
-              }
-              .text-center {
-                text-align: center;
-              }
-              .border-b {
-                border-bottom: 1px solid rgba(0, 0, 0, 1);
-              }
-              .pb-2 {
-                padding-bottom: 0.5rem;
-              }
-              .mb-4 {
-                margin-bottom: 1rem;
-              }
-              .text-xl {
-                font-size: 1.25rem;
-                line-height: 1.75rem;
-              }
-              .font-bold {
-                font-weight: 700;
-              }
-              .uppercase {
-                text-transform: uppercase;
-              }
-              .text-lg {
-                font-size: 1.125rem;
-                line-height: 1.75rem;
-              }
-              .font-semibold {
-                font-weight: 600;
-              }
-              .mt-2 {
-                margin-top: 0.5rem;
-              }
-              .underline {
-                text-decoration: underline;
-              }
-              .text-sm {
-                font-size: 0.875rem;
-                line-height: 1.25rem;
-              }
-              .mt-1 {
-                margin-top: 0.25rem;
-              }
-              .grid {
-                display: grid;
-              }
-              .grid-cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-              }
-              .gap-2 {
-                gap: 0.5rem;
-              }
-              .mb-3 {
-                margin-bottom: 0.75rem;
-              }
-              .w-full {
-                width: 100%;
-              }
-              .text-center {
-                text-align: center;
-              }
-              .text-xs {
-                font-size: 0.75rem;
-                line-height: 1rem;
-              }
-              .bg-gray-100 {
-                background-color: rgba(247, 250, 252, 1);
-              }
-              .mt-3 {
-                margin-top: 0.75rem;
-              }
-              .text-right {
-                text-align: right;
-              }
-              .text-base {
-                font-size: 1rem;
-                line-height: 1.5rem;
-              }
-              .border-t {
-                border-top: 1px solid rgba(0, 0, 0, 1);
-              }
-              .pt-1 {
-                padding-top: 0.25rem;
-              }
-              .mt-4 {
-                margin-top: 1rem;
-              }
-              .pt-2 {
-                padding-top: 0.5rem;
-              }
-              .italic {
-                font-style: italic;
-              }
-              .mt-6 {
-                margin-top: 1.5rem;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-              }
-              th, td {
-                border: 1px solid rgba(0, 0, 0, 0.1);
-                padding: 0.5rem;
-                text-align: left;
-              }
-              th {
-                background-color: rgba(247, 250, 252, 1);
-                font-weight: 700;
-              }
-              .px-2 {
-                padding-left: 0.5rem;
-                padding-right: 0.5rem;
-              }
-              .py-1 {
-                padding-top: 0.25rem;
-                padding-bottom: 0.25rem;
-              }
-              .text-left {
-                text-align: left;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="invoice-container">
-              ${printContent.innerHTML}
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      
-      // Wait for content to load before printing
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
+      // Simple approach: just print the current window
+      window.print();
     } else {
       // If we don't have a currentBill or ref, show an error
       alert('No bill selected for printing');
@@ -695,15 +618,23 @@ const Billing = () => {
   // Function to handle hospital bill creation
   const handleCreateHospitalBill = () => {
     setFormData({
-      hospitalInfo: hospitalInfo,
+        hospitalInfo: {
+            name: hospitalInfo.name,
+            address: hospitalInfo.address,
+            phone: hospitalInfo.phone,
+            email: hospitalInfo.email,
+            regNo: hospitalInfo.regNo
+        },
       patientInfo: {
         name: "",
         age: "",
         sex: "",
         address: "",
         phone: "",
+        consultantName: "",
         admitDate: "",
         dischargeDate: "",
+        ipdNo: "",
         date: new Date().toISOString().split('T')[0],
       },
       charges: [
@@ -713,6 +644,10 @@ const Billing = () => {
           description: "",
           qty: 1,
           amount: 0,
+          filteredMedicines: [],
+          filteredServices: [],
+          showDropdown: false,
+          medicineId: null,
         }
       ],
       payment: {
@@ -736,7 +671,6 @@ const Billing = () => {
         address: medialInfo.address,
         phone: medialInfo.phone,
         email: "",
-        regNo: "GSTIN: 08BZJPS2130M1ZD"
       },
       patientInfo: {
         name: "",
@@ -744,8 +678,10 @@ const Billing = () => {
         sex: "",
         address: "",
         phone: "",
+        consultantName: "",
         admitDate: "",
         dischargeDate: "",
+        ipdNo: "",
         date: new Date().toISOString().split('T')[0],
       },
       charges: [
@@ -755,6 +691,10 @@ const Billing = () => {
           description: "",
           qty: 1,
           amount: 0,
+          filteredMedicines: [],
+          filteredServices: [],
+          showDropdown: false,
+          medicineId: null,
         }
       ],
       payment: {
@@ -777,12 +717,12 @@ const Billing = () => {
     
     // Ensure bill has all required properties
     if (!bill.hospitalInfo) {
-      bill.hospitalInfo = {
-        name: "Medicare Hospital",
-        address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
-        phone: "7023314141, 6350283164, 7340306199, 8058280829",
-        email: "medicarehospital14@gmail.com",
-      };
+        bill.hospitalInfo = {
+            name: "Medicare Hospital",
+            address: "Khawa Rani ji, Jamwa Ramgarh,Jaipur 303109(Raj)",
+            phone: "7023314141, 6350283164, 7340306199, 8058280829",
+            email: "medicarehospital14@gmail.com",
+        };
     }
     
     if (!bill.patientInfo) {
@@ -799,14 +739,22 @@ const Billing = () => {
     
     if (!bill.charges) {
       bill.charges = [];
+    } else {
+      // Ensure each charge has proper properties
+      bill.charges = bill.charges.map(charge => ({
+        ...charge,
+        name: charge.name ? (typeof charge.name === 'object' ? charge.name.name : charge.name) : 'Service/Charge',
+        qty: charge.qty || 0,
+        amount: charge.amount || 0
+      }));
     }
     
     if (!bill.payment) {
       bill.payment = {
         mode: 'Cash',
         date: '',
-        amount: 0,
-        amountInWords: ''
+        amount: bill.summary ? bill.summary.total : 0,
+        amountInWords: bill.summary ? (toWords.convert(parseFloat(bill.summary.total) || 0) || '') : ''
       };
     }
     
@@ -865,8 +813,81 @@ const Billing = () => {
     };
   }, [currentBill]);
 
+  // Function to render medicine input for medical bills
+  const renderMedicineInput = (charge, index) => (
+    <td className="px-4 py-2 ">
+      <input
+        type="text"
+        value={charge.name || ""}
+        onChange={(e) => handleSearchChange(index, e.target.value)}
+        onFocus={() => handleFocus(index)}
+        onBlur={handleBlur}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Select or type service/medicine name"
+      />
+      {showDropdown && dropdownIndex === index && (
+        (charge.filteredMedicines && charge.filteredMedicines.length > 0) || 
+        (charge.filteredServices && charge.filteredServices.length > 0)
+      ) && (
+        <div className="absolute z-50 mt-1 w-full bg-white shadow-lg rounded-md max-h-96 overflow-y-auto overflow-x-hidden scrollbar-hide">
+          {/* Show medicines for medical bills */}
+          {formData.billType === 'medical' && charge.filteredMedicines && charge.filteredMedicines.length > 0 && (
+            <>
+              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Medicines</div>
+              {charge.filteredMedicines.map((medicine) => (
+                <div
+                  key={medicine._id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => handleMedicineSelect(index, medicine)}
+                >
+                  <div className="font-medium">{medicine.name}</div>
+                  <div className="text-sm text-gray-500">{medicine.composition} - Price: ₹{medicine.price}</div>
+                </div>
+              ))}
+            </>
+          )}
+          
+          {/* Show services for hospital bills */}
+          {formData.billType === 'hospital' && charge.filteredServices && charge.filteredServices.length > 0 && (
+            <>
+              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Services</div>
+              {charge.filteredServices.map((service) => (
+                <div
+                  key={service._id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => handleServiceSelect(index, service)}
+                >
+                  <div className="font-medium">{service.name}</div>
+                  <div className="text-sm text-gray-500">Price: ₹{service.price}</div>
+                </div>
+              ))}
+            </>
+          )}
+          
+          {/* Show medicines for hospital bills as well */}
+          {formData.billType === 'hospital' && charge.filteredMedicines && charge.filteredMedicines.length > 0 && (
+            <>
+              <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase border-t mt-2">Medicines</div>
+              {charge.filteredMedicines.map((medicine) => (
+                <div
+                  key={medicine._id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseDown={() => handleMedicineSelect(index, medicine)}
+                >
+                  <div className="font-medium">{medicine.name}</div>
+                  <div className="text-sm text-gray-500">{medicine.composition} - Price: ₹{medicine.price}</div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </td>
+  );
+
   return (
     <div className="p-6">
+      <Toaster position="top-right" /> {/* Add Toaster component for toast notifications */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Billing</h1>
         <div className="flex space-x-2">
@@ -955,7 +976,46 @@ const Billing = () => {
                     required
                   />
                 </div>
-              
+                {formData.billType === 'hospital' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Consultant Name</label>
+                      <input
+                        type="text"
+                        value={formData.patientInfo.consultantName || ""}
+                        onChange={(e) => handleInputChange(e, 'patientInfo', 'consultantName')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Admit Date</label>
+                      <input
+                        type="date"
+                        value={formData.patientInfo.admitDate || ""}
+                        onChange={(e) => handleInputChange(e, 'patientInfo', 'admitDate')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Discharge Date</label>
+                      <input
+                        type="date"
+                        value={formData.patientInfo.dischargeDate || ""}
+                        onChange={(e) => handleInputChange(e, 'patientInfo', 'dischargeDate')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">IPD No</label>
+                      <input
+                        type="text"
+                        value={formData.patientInfo.ipdNo || ""}
+                        onChange={(e) => handleInputChange(e, 'patientInfo', 'ipdNo')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -978,7 +1038,9 @@ const Billing = () => {
                 <table className="min-w-full  divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Medicine</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {formData.billType === 'hospital' ? 'Service' : 'Medicine'}
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (₹)</th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
@@ -988,31 +1050,33 @@ const Billing = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {formData.charges.map((charge, index) => (
                       <tr key={charge.id}>
-                        <td className="px-4 py-2 ">
-                          <input
-                            type="text"
-                            value={charge.name || ""}
-                            onChange={(e) => handleSearchChange(index, e.target.value)}
-                            onFocus={() => handleFocus(index)}
-                            onBlur={handleBlur}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Select or type medicine name"
+                        {formData.billType === 'hospital' ? (
+                          <HospitalServiceInput
+                            charge={charge}
+                            index={index}
+                            services={services}
+                            showDropdown={showDropdown}
+                            dropdownIndex={dropdownIndex}
+                            handleServiceSearch={handleServiceSearch}
+                            handleServiceFocus={handleServiceFocus}
+                            handleServiceBlur={handleServiceBlur}
+                            handleServiceSelect={handleServiceSelect}
+                            handleServiceChange={handleChargeChange}
                           />
-                          {showDropdown && dropdownIndex === index && charge.filteredMedicines && charge.filteredMedicines.length > 0 && (
-                            <div className="absolute z-50 mt-1 w-full bg-white shadow-lg rounded-md max-h-96 overflow-y-auto overflow-x-hidden scrollbar-hide">
-                              {charge.filteredMedicines.map((medicine) => (
-                                <div
-                                  key={medicine._id}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                  onMouseDown={() => handleMedicineSelect(index, medicine)}
-                                >
-                                  <div className="font-medium">{medicine.name}</div>
-                                  <div className="text-sm text-gray-500">{medicine.composition} - Price: ₹{medicine.price}</div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </td>
+                        ) : (
+                          <MedicalMedicineInput
+                            charge={charge}
+                            index={index}
+                            medicines={medicines}
+                            showDropdown={showDropdown}
+                            dropdownIndex={dropdownIndex}
+                            handleMedicineSearch={handleSearchChange}
+                            handleMedicineFocus={handleFocus}
+                            handleMedicineBlur={handleBlur}
+                            handleMedicineSelect={handleMedicineSelect}
+                            handleMedicineChange={handleChargeChange}
+                          />
+                        )}
                         
                         <td className="px-4 py-2">
                           <input
@@ -1034,7 +1098,7 @@ const Billing = () => {
                           />
                         </td>
                         <td className="px-4 py-2">
-                          ₹{parseFloat(charge.qty * charge.amount).toFixed(2)}
+                          ₹{parseFloat((charge.qty || 0) * (charge.amount || 0)).toFixed(2)}
                         </td>
                         <td className="px-4 py-2">
                           <button
@@ -1167,14 +1231,16 @@ const Billing = () => {
               Close
             </button>
             <button
-              onClick={handlePrint}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center"
+              onClick={() => window.open(`/bill/${currentBill.id || currentBill.billNo}`, '_blank')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
               </svg>
-              Print Bill
+              View/print
             </button>
+            
           </div>
           <div ref={invoiceRef}>
             <Invoice
@@ -1242,22 +1308,17 @@ const Billing = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{bill.summary ? parseFloat(bill.summary.total).toFixed(2) : '0.00'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
-                          onClick={() => {
-                            setCurrentBill(bill);
-                          }}
+                          onClick={() => window.open(`/bill/${bill.id || bill.billNo}`, '_blank')}
                           className="text-blue-600 hover:text-blue-900 mr-3"
                         >
-                          View
+                          View/print
                         </button>
-                        <button
-                          onClick={() => {
-                            window.printRequested = true;
-                            setCurrentBill(bill);
-                          }}
+                        {/* <button
+                          onClick={() => {window.open(`/bill/${bill.id || bill.billNo}`, '_blank')  }}
                           className="text-green-600 hover:text-green-900"
                         >
                           Print
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ) : null

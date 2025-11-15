@@ -6,6 +6,8 @@ import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css'
 import Billing from './pages/Billing';
+import BillView from './components/BillView';
+import ServicesPage from './pages/ServicesPage';
 
 function App() {
   return (
@@ -13,6 +15,7 @@ function App() {
       <div className="bg-gray-100 min-h-screen">
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/bill/:billId" element={<BillView />} />
           <Route path="/" element={
             <ProtectedRoute>
               <DashboardPage />
@@ -22,6 +25,7 @@ function App() {
             <Route path="dashboard" element={<InventoryPage />} />
             <Route path="dashboard/inventory" element={<InventoryPage />} />
             <Route path="dashboard/billing" element={<Billing/>} />
+            <Route path="dashboard/services" element={<ServicesPage />} />
           </Route>
         </Routes>
       </div>
