@@ -50,26 +50,28 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
             <strong>Reg No:</strong> {safeHospitalInfo.regNo}
           </p>
         )}
-        {billType === 'medical' && (
-          <p className="mt-1">
-            <strong>D.L. No.:</strong> DRUG/2025-26/13632-136324
-          </p>
-        )}
+        
         <h2 className="text-lg font-semibold mt-2 underline">Final Bill</h2>
         
-        {billNo && (
-          <p className="text-sm mt-1">
-            <strong>Bill No:</strong> {billNo}
-          </p>
-        )}
+        
       </div>
 
       {/* Patient Info */}
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
+          {billNo && (
+          <p className="text-sm mt-1">
+            <strong>Bill No:</strong> {billNo}
+          </p>
+        )}
           <p>
             <strong>Patient Name:</strong> {safePatientInfo.name}
           </p>
+          {billType !== 'medical' && ( 
+            <p>
+                <strong>Reg No:</strong> {safePatientInfo.patientRegistration}
+              </p>
+          )}
           <p>
             <strong>Age/Sex:</strong> {safePatientInfo.age} / {safePatientInfo.sex}
           </p>
@@ -79,13 +81,16 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
           <p>
             <strong>Phone:</strong> {safePatientInfo.phone}
           </p>
+          {billType === 'medical' && (
+          <p className="mt-1">
+            <strong>D.L. No.:</strong> DRUG/2025-26/13632-136324
+          </p>
+        )}
         </div>
         <div>
           {billType !== 'medical' && (
             <>
-              <p>
-                <strong>Reg No:</strong> {safePatientInfo.patientRegistration}
-              </p>
+              
               <p>
                 <strong>Consultant Name:</strong> {safePatientInfo.consultantName}
               </p>
