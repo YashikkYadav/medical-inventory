@@ -45,11 +45,7 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
       { safeHospitalInfo?.email&& <p>
           email: {safeHospitalInfo.email}
         </p>}
-        { safeHospitalInfo?.regNo && (
-          <p className="mt-1">
-            <strong>Reg No:</strong> {safeHospitalInfo.regNo}
-          </p>
-        )}
+        
         
         <h2 className="text-lg font-semibold mt-2 underline">Final Bill</h2>
         
