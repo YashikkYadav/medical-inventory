@@ -143,6 +143,7 @@ const Billing = () => {
               hour12: true
             }),
             ipdNo: invoice.ipdNo || '',
+            patientRegistration: invoice.patientRegistration || '', // Add patient registration field
           },
           charges: invoice.items.map((item, index) => ({
             id: index + 1,
@@ -205,6 +206,7 @@ const Billing = () => {
       admitDate: "",
       dischargeDate: "",
       ipdNo: "",
+      patientRegistration: "", // Add patient registration field
       date: new Date().toISOString().split('T')[0],
     },
     charges: [
@@ -459,6 +461,7 @@ const Billing = () => {
         admitDate: formData.patientInfo.admitDate,
         dischargeDate: formData.patientInfo.dischargeDate,
         ipdNo: formData.patientInfo.ipdNo,
+        patientRegistration: formData.patientInfo.patientRegistration, // Add patient registration field
         billType: formData.billType || 'medical', // Add billType to differentiate hospital and medical bills
         items: formData.charges.map(charge => ({
           medicine: charge.medicineId, // This can be null for hospital bills
@@ -495,6 +498,7 @@ const Billing = () => {
           admitDate: formData.patientInfo.admitDate || '',
           dischargeDate: formData.patientInfo.dischargeDate || '',
           ipdNo: formData.patientInfo.ipdNo || '',
+          patientRegistration: formData.patientInfo.patientRegistration || '', // Add patient registration field
         },
         charges: createdInvoice.items ? createdInvoice.items.map((item, index) => ({
           id: index + 1,
@@ -555,6 +559,7 @@ const Billing = () => {
           admitDate: "",
           dischargeDate: "",
           ipdNo: "",
+          patientRegistration: "", // Add patient registration field
           date: new Date().toISOString().split('T')[0],
         },
         charges: [
@@ -635,6 +640,7 @@ const Billing = () => {
         admitDate: "",
         dischargeDate: "",
         ipdNo: "",
+        patientRegistration: "", // Add patient registration field
         date: new Date().toISOString().split('T')[0],
       },
       charges: [
@@ -682,6 +688,7 @@ const Billing = () => {
         admitDate: "",
         dischargeDate: "",
         ipdNo: "",
+        patientRegistration: "", // Add patient registration field
         date: new Date().toISOString().split('T')[0],
       },
       charges: [
@@ -734,6 +741,7 @@ const Billing = () => {
         phone: '',
         admitDate: '',
         dischargeDate: '',
+        patientRegistration: '', // Add patient registration field
       };
     }
     
@@ -1011,6 +1019,15 @@ const Billing = () => {
                         type="text"
                         value={formData.patientInfo.ipdNo || ""}
                         onChange={(e) => handleInputChange(e, 'patientInfo', 'ipdNo')}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Reg No</label>
+                      <input
+                        type="text"
+                        value={formData.patientInfo.patientRegistration || ""}
+                        onChange={(e) => handleInputChange(e, 'patientInfo', 'patientRegistration')}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>

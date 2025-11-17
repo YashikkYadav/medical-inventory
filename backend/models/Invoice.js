@@ -37,6 +37,10 @@ const invoiceSchema = new mongoose.Schema({
     type: String,
     required: false
   },
+  patientRegistration: {
+    type: String,
+    required: false
+  },
   billType: {
     type: String,
     required: true,

@@ -28,7 +28,7 @@ const getInvoice = asyncHandler(async (req, res) => {
 // @route   POST /api/invoices
 // @access  Public
 const createInvoice = asyncHandler(async (req, res) => {
-  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, items, discount = 0, tax = 0, billType = 'medical', amountInWords } = req.body;
+  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, patientRegistration, items, discount = 0, tax = 0, billType = 'medical', amountInWords } = req.body;
 
   // Allow invoices without items for hospital bills
   let totalAmount = 0;
@@ -73,6 +73,7 @@ const createInvoice = asyncHandler(async (req, res) => {
     admitDate,
     dischargeDate,
     ipdNo,
+    patientRegistration,
     billType,
     items: items || [],
     totalAmount,
@@ -97,7 +98,7 @@ const createInvoice = asyncHandler(async (req, res) => {
 // @route   PUT /api/invoices/:id
 // @access  Public
 const updateInvoice = asyncHandler(async (req, res) => {
-  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, items, discount, tax, billType, amountInWords } = req.body;
+  const { customerName, customerContact, patientAge, patientSex, patientAddress, consultantName, admitDate, dischargeDate, ipdNo, patientRegistration, items, discount, tax, billType, amountInWords } = req.body;
 
   const invoice = await Invoice.findById(req.params.id);
 
@@ -172,6 +173,7 @@ const updateInvoice = asyncHandler(async (req, res) => {
   invoice.admitDate = admitDate !== undefined ? admitDate : invoice.admitDate;
   invoice.dischargeDate = dischargeDate !== undefined ? dischargeDate : invoice.dischargeDate;
   invoice.ipdNo = ipdNo !== undefined ? ipdNo : invoice.ipdNo;
+  invoice.patientRegistration = patientRegistration !== undefined ? patientRegistration : invoice.patientRegistration;
   invoice.billType = billType !== undefined ? billType : invoice.billType;
   invoice.items = items !== undefined ? items : invoice.items;
   invoice.discount = discount !== undefined ? discount : invoice.discount;

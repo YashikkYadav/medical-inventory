@@ -89,6 +89,9 @@ const Invoice = ({ hospitalInfo, patientInfo, charges, summary, payment, billNo,
               <p>
                 <strong>IPD No:</strong> {safePatientInfo.ipdNo}
               </p>
+              <p>
+                <strong>Reg No:</strong> {safePatientInfo.patientRegistration}
+              </p>
             </>
           )}
         </div>
