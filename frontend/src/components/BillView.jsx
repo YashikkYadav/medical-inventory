@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import Invoice from './Invoice';
+import React, { useEffect } from "react";
+import { useParams } from "react-router-dom";
+import Invoice from "./Invoice";
+import MedicalBill from "./MedicalBill";
 
 const BillView = () => {
   const { billId } = useParams();
@@ -8,14 +9,14 @@ const BillView = () => {
 
   useEffect(() => {
     // Load bill data from sessionStorage
-    const bills = JSON.parse(sessionStorage.getItem('invoices') || '[]');
-    const foundBill = bills.find(b => b.id === billId || b.billNo === billId);
-    
+    const bills = JSON.parse(sessionStorage.getItem("invoices") || "[]");
+    const foundBill = bills.find((b) => b.id === billId || b.billNo === billId);
+
     if (foundBill) {
       setBill(foundBill);
     } else {
       // If not found in sessionStorage, you might want to fetch from API
-      console.error('Bill not found');
+      console.error("Bill not found");
     }
   }, [billId]);
 
@@ -37,15 +38,27 @@ const BillView = () => {
   return (
     <div className="p-4">
       <div className="max-w-4xl mx-auto">
-        <Invoice
-          hospitalInfo={bill.hospitalInfo}
-          patientInfo={bill.patientInfo}
-          charges={bill.charges}
-          summary={bill.summary}
-          payment={bill.payment}
-          billNo={bill.billNo}
-          billType={bill.billType}
-        />
+        {bill.billType === "medical" ? (
+          <MedicalBill
+            hospitalInfo={bill.hospitalInfo}
+            patientInfo={bill.patientInfo}
+            charges={bill.charges}
+            summary={bill.summary}
+            payment={bill.payment}
+            billNo={bill.billNo}
+            billType={bill.billType}
+          />
+        ) : (
+          <Invoice
+            hospitalInfo={bill.hospitalInfo}
+            patientInfo={bill.patientInfo}
+            charges={bill.charges}
+            summary={bill.summary}
+            payment={bill.payment}
+            billNo={bill.billNo}
+            billType={bill.billType}
+          />
+        )}
         <div className="mt-6 text-center print:hidden">
           <button
             onClick={() => window.print()}

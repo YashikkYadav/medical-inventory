@@ -1,8 +1,8 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 // Get all invoices
 export const getInvoices = async () => {
-  const response = await apiClient.get('/invoices');
+  const response = await apiClient.get("/invoices");
   return response;
 };
 
@@ -14,7 +14,7 @@ export const getInvoice = async (id) => {
 
 // Create a new invoice
 export const createInvoice = async (invoiceData) => {
-  const response = await apiClient.post('/invoices', invoiceData);
+  const response = await apiClient.post("/invoices", invoiceData);
   return response;
 };
 

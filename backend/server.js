@@ -1,10 +1,10 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const { errorHandler } = require('./utils/errorHandler');
-const User = require('./models/User');
-const requestLogger = require('./middleware/requestLogger');
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const { errorHandler } = require("./utils/errorHandler");
+const User = require("./models/User");
+const requestLogger = require("./middleware/requestLogger");
 
 // Load env vars
 dotenv.config();
@@ -15,23 +15,25 @@ connectDB();
 // Create default admin user
 const createDefaultAdmin = async () => {
   try {
-    const adminExists = await User.findOne({ email: process.env.DEFAULT_ADMIN_EMAIL });
-    
+    const adminExists = await User.findOne({
+      email: process.env.DEFAULT_ADMIN_EMAIL,
+    });
+
     if (!adminExists) {
       const adminUser = new User({
-        name: 'Admin User',
+        name: "Admin User",
         email: process.env.DEFAULT_ADMIN_EMAIL,
         password: process.env.DEFAULT_ADMIN_PASSWORD,
-        isAdmin: true
+        isAdmin: true,
       });
-      
+
       await adminUser.save();
-      console.log('Default admin user created');
+      console.log("Default admin user created");
     } else {
-      console.log('Default admin user already exists');
+      console.log("Default admin user already exists");
     }
   } catch (error) {
-    console.error('Error creating default admin:', error);
+    console.error("Error creating default admin:", error);
   }
 };
 
@@ -43,13 +45,22 @@ app.use(express.json());
 app.use(requestLogger);
 
 // Routes
-app.use('/api/medicines', require('./routes/medicineRoutes'));
-app.use('/api/invoices', require('./routes/invoiceRoutes'));
-app.use('/api/users', require('./routes/userRoutes'));
-app.use('/api/services', require('./routes/serviceRoutes'));
+const medicineRoutes = require("./routes/medicineRoutes");
+const invoiceRoutes = require("./routes/invoiceRoutes");
+const medicalBillRoutes = require("./routes/medicalBillRoutes");
+const userRoutes = require("./routes/userRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
+const hospitalBillRoutes = require("./routes/hospitalBillRoutes"); // Added hospital bill routes
 
-app.get('/', (req, res) => {
-  res.json({ message: 'API Running...' });
+app.use("/api/medicines", medicineRoutes);
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/medical-bills", medicalBillRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/hospital-bills", hospitalBillRoutes); // Added hospital bill routes
+
+app.get("/", (req, res) => {
+  res.json({ message: "API Running..." });
 });
 
 // Error handler

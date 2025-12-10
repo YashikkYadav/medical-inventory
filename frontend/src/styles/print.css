@@ -1,0 +1,48 @@
+/* Print Styles for Hospital Bills */
+
+@media print {
+  /* Hide all elements except the bill content */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the bill container and its children */
+  .print\:w-full,
+  .print\:w-full *,
+  .print\:max-w-none,
+  .print\:max-w-none * {
+    visibility: visible;
+  }
+
+  /* Position the bill at the top of the page */
+  .print\:w-full {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: none !important;
+  }
+
+  /* Hide navigation and control elements */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure proper page breaks */
+  .page-break {
+    page-break-before: always;
+  }
+
+  /* Optimize for A4 paper */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Remove shadows and background colors for printing */
+  * {
+    box-shadow: none !important;
+    background: white !important;
+    color: black !important;
+  }
+}
