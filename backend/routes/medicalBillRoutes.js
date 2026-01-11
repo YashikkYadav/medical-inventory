@@ -8,6 +8,10 @@ const {
   deleteMedicalBill,
 } = require("../controllers/medicalBillController");
 
+const { protect } = require("../middleware/authMiddleware");
+
+router.use(protect);
+
 router.route("/").get(getMedicalBills).post(createMedicalBill);
 
 router

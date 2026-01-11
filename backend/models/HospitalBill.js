@@ -10,6 +10,11 @@ const hospitalBillSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    patient: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Patient",
+      required: false,
+    },
     patientAge: {
       type: String,
       required: false,

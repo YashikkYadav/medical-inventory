@@ -1,6 +1,26 @@
-import React from "react";
+import { ToWords } from 'to-words';
 
-const HospitalBill = ({ bill }) => {
+const HospitalBill = ({ bill, advanceDetails = [] }) => {
+  const toWords = new ToWords({
+    localeCode: 'en-IN',
+    converterOptions: {
+      currency: true,
+      ignoreDecimal: false,
+      ignoreZeroCurrency: false,
+      doNotAddOnly: false,
+      currencyOptions: {
+        name: 'Rupee',
+        plural: 'Rupees',
+        symbol: '₹',
+        fractionalUnit: {
+          name: 'Paisa',
+          plural: 'Paise',
+          symbol: '',
+        },
+      },
+    },
+  });
+
   // If no bill data, show loading state
   if (!bill) {
     return (
@@ -34,6 +54,7 @@ const HospitalBill = ({ bill }) => {
     let total = 0;
     let discount = parseFloat(bill.discount) || 0;
     let tax = parseFloat(bill.tax) || 0;
+    let totalAdvance = 0;
 
     // Calculate service total
     if (bill.services && Array.isArray(bill.services)) {
@@ -42,11 +63,22 @@ const HospitalBill = ({ bill }) => {
       }, 0);
     }
 
-    const grandTotal = total - discount + tax;
-    return { total, discount, tax, grandTotal };
+    // Calculate total advance from passed advanceDetails (IPD Bills)
+    if (advanceDetails && Array.isArray(advanceDetails)) {
+        totalAdvance = advanceDetails.reduce((sum, adv) => {
+             return sum + (parseFloat(adv.totalAmount) || parseFloat(adv.amount) || 0);
+        }, 0);
+    }
+
+    const netBillAmount = total - discount + tax;
+    const balanceToPay = netBillAmount - totalAdvance;
+    
+    return { total, discount, tax, totalAdvance, netBillAmount, balanceToPay };
   };
 
-  const { total, discount, tax, grandTotal } = calculateTotals();
+  const { total, discount, tax, totalAdvance, netBillAmount, balanceToPay } = calculateTotals();
+  const isNegativeBalance = balanceToPay < 0;
+  const absBalance = Math.abs(balanceToPay);
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center items-center p-8 font-sans text-gray-800 print:min-h-0 print:p-0 print:m-0">
@@ -212,18 +244,18 @@ const HospitalBill = ({ bill }) => {
 
           <div className="w-[250px] flex justify-between print:w-[200px] print:text-xs">
             <span>Total Bill Amount</span>
-            <span>{grandTotal.toFixed(2)}</span>
+            <span>{netBillAmount.toFixed(2)}</span>
           </div>
           <div className="w-[250px] flex justify-between print:w-[200px] print:text-xs">
             <span>Less:-Advance Amount</span>
-            <span>0.00</span>
+            <span>{totalAdvance.toFixed(2)}</span>
           </div>
 
           <div className="w-[200px] border-t border-dashed border-gray-400 my-1 print:w-[150px] print:my-0"></div>
 
           <div className="w-[250px] flex justify-between font-bold text-[13px] print:w-[200px] print:text-xs print:font-bold">
-            <span>Balance to be paid by Patient</span>
-            <span>{grandTotal.toFixed(2)}</span>
+            <span>{isNegativeBalance ? "Balance to be paid TO Patient" : "Balance to be paid by Patient"}</span>
+            <span>{absBalance.toFixed(2)}</span>
           </div>
           <div className="w-[200px] border-t-2 border-dashed border-gray-400 mt-1 print:w-[150px] print:border-t-2 print:mt-0"></div>
         </div>
@@ -231,29 +263,31 @@ const HospitalBill = ({ bill }) => {
         {/* --- AMOUNT IN WORDS --- */}
         <div className="mb-4 print:mb-2 print:text-xs">
           {/* {console.log(bill)} */}
-          <p>(Rs. {bill.amountInWords || "Zero only"})</p>
+          <p>({toWords.convert(absBalance)})</p>
         </div>
 
         {/* --- ADVANCE DETAILS --- */}
-        {/* <div className="mb-4 print:mb-2 print:text-xs">
-          <p className="underline mb-1">Advance Details</p>
-          <div className="border-t border-b border-gray-400 py-1 flex mb-1 print:border-t print:border-b print:py-0">
-            <div className="w-[15%]">Recpt. No</div>
-            <div className="w-[20%]">Date</div>
-            <div className="w-[15%] text-right">Amount</div>
-            <div className="w-[10%] text-center">Mode</div>
-            <div className="w-[20%] pl-4">Cheque No.</div>
-            <div className="w-[20%]">Bank Name</div>
-          </div>
-          <div className="flex print:text-xs">
-            <div className="w-[15%]">0001172</div>
-            <div className="w-[20%]">21/09/2023</div>
-            <div className="w-[15%] text-right">5000.00</div>
-            <div className="w-[10%] text-center">Cash</div>
-            <div className="w-[20%] pl-4"></div>
-            <div className="w-[20%]"></div>
-          </div>
-        </div> */}
+        {advanceDetails && advanceDetails.length > 0 && (
+             <div className="mb-4 print:mb-2 print:text-xs">
+                <p className="underline mb-1">Advance Details</p>
+                <div className="border-t border-b border-gray-400 py-1 flex mb-1 print:border-t print:border-b print:py-0 font-medium">
+                  <div className="w-[20%]">Recpt. No</div>
+                  <div className="w-[20%]">Date</div>
+                  <div className="w-[20%] text-right">Amount</div>
+                  <div className="w-[20%] text-center">Mode</div>
+                  <div className="w-[20%]">Remarks</div>
+                </div>
+                {advanceDetails.map((adv, idx) => (
+                    <div key={idx} className="flex print:text-xs mb-0.5">
+                        <div className="w-[20%]">{adv.billNo || adv._id?.substring(0,8)}</div>
+                        <div className="w-[20%]">{formatDate(adv.createdAt)}</div>
+                        <div className="w-[20%] text-right">{parseFloat(adv.totalAmount).toFixed(2)}</div>
+                        <div className="w-[20%] text-center">{adv.paymentMode}</div>
+                        <div className="w-[20%] truncate">{adv.remarks}</div>
+                    </div>
+                ))}
+             </div>
+        )}
 
         {/* --- DEPOSIT RECEIPT DETAILS --- */}
         {/* <div className="mb-8 print:mb-4 print:text-xs">

@@ -11,6 +11,10 @@ import ServicesPage from "./pages/ServicesPage";
 
 import ViewMedicalBill from "./pages/ViewMedicalBill";
 import ViewHospitalBill from "./pages/ViewHospitalBill"; // Added ViewHospitalBill import
+import Opdbill from "./components/Opdbill";
+import Ipdbill from "./components/Ipdbill";
+import { PatientPage } from "./pages/PatientPage";
+import HospitalBill from "./components/HospitalBill";
 
 function App() {
   return (
@@ -40,6 +44,10 @@ function App() {
             <Route path="dashboard/inventory" element={<InventoryPage />} />
             <Route path="dashboard/billing" element={<Billing />} />
             <Route path="dashboard/services" element={<ServicesPage />} />
+            <Route path="dashboard/patient" element={<PatientPage />} />
+            <Route path="dashboard/hospitalbill" element={<HospitalBill />} />
+            <Route path="dashboard/opdbill" element={<Opdbill />} />
+            <Route path="dashboard/ipdbill" element={<Ipdbill />} />
           </Route>
         </Routes>
       </div>

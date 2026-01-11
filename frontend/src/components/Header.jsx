@@ -15,9 +15,8 @@ const Header = () => {
   return (
     <header className="bg-white shadow">
       <div className="flex items-center justify-between h-16 px-4">
-        <div className="flex items-center">
-          <div className="md:hidden w-16"></div> 
-          Medicare Hospital
+        <div className="flex items-center text-xl font-bold text-blue-600">
+          Medicare inventory
         </div>
         <div className="flex items-center">
           <button 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../apis/authApi';
 import { getMedicines } from '../apis/medicineApi';
 import { getInvoices } from '../apis/invoiceApi';
+import { toast } from 'react-hot-toast';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -18,26 +19,33 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const data = await loginUser({ email, password });
+      const data = await toast.promise(
+        loginUser({ email, password }),
+        {
+          loading: 'Authenticating...',
+          success: 'Login Successful!',
+          error: (err) => err || 'Invalid credentials'
+        }
+      );
       
       // Save token to localStorage
       localStorage.setItem('token', data.token);
       
-      // Fetch all medicines and store in sessionStorage
-      try {
-        const medicines = await getMedicines();
-        sessionStorage.setItem('medicines', JSON.stringify(medicines));
-      } catch (medError) {
-        console.error('Failed to fetch medicines:', medError);
-      }
+      // Fetch initial data
+      const fetchInitialData = async () => {
+        try {
+          const [medicines, invoices] = await Promise.all([
+            getMedicines(),
+            getInvoices()
+          ]);
+          sessionStorage.setItem('medicines', JSON.stringify(medicines));
+          sessionStorage.setItem('invoices', JSON.stringify(invoices));
+        } catch (error) {
+          console.error("Failed to pre-fetch data:", error);
+        }
+      };
       
-      // Fetch all invoices and store in sessionStorage
-      try {
-        const invoices = await getInvoices();
-        sessionStorage.setItem('invoices', JSON.stringify(invoices));
-      } catch (invError) {
-        console.error('Failed to fetch invoices:', invError);
-      }
+      await fetchInitialData();
       
       // Redirect to dashboard
       navigate('/dashboard');

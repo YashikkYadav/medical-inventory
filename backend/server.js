@@ -50,14 +50,20 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 const medicalBillRoutes = require("./routes/medicalBillRoutes");
 const userRoutes = require("./routes/userRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
-const hospitalBillRoutes = require("./routes/hospitalBillRoutes"); // Added hospital bill routes
+const hospitalBillRoutes = require("./routes/hospitalBillRoutes");
+const opdBillRoutes = require("./routes/opdBillRoutes");
+const ipdBillRoutes = require("./routes/ipdBillRoutes");
+const patientRoutes = require("./routes/patientRoutes"); // Added patient routes import
 
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/medical-bills", medicalBillRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/services", serviceRoutes);
-app.use("/api/hospital-bills", hospitalBillRoutes); // Added hospital bill routes
+app.use("/api/hospital-bills", hospitalBillRoutes);
+app.use("/api/opd-bills", opdBillRoutes);
+app.use("/api/ipd-bills", ipdBillRoutes);
+app.use("/api/patients", patientRoutes); // Added patient routes
 
 app.get("/", (req, res) => {
   res.json({ message: "API Running..." });

@@ -7,6 +7,7 @@ import {
   FaServicestack,
   FaTools,
   FaCapsules,
+  FaUser,
 } from "react-icons/fa";
 import { MdDashboard } from "react-icons/md";
 
@@ -34,26 +35,32 @@ const Sidebar = () => {
       path: "/dashboard/billing",
       icon: <FaReceipt />,
     },
+    {
+      name:"Patient",
+      path:"/dashboard/patient",
+      icon:<FaUser/>
+    }
   ];
 
   return (
-    <div className="bg-gray-800 text-white h-full min-h-screen w-16 md:w-36 transition-all duration-300">
-      <nav className="mt-5">
-        <ul>
+    <div className="bg-gray-800 text-white fixed bottom-0 left-0 right-0 md:static md:h-full md:min-h-screen w-full md:w-36 transition-all duration-300 z-[100] border-t border-gray-700 md:border-t-0">
+      <nav className="md:mt-5 h-16 md:h-auto">
+        <ul className="flex md:flex-col justify-around md:justify-start h-full items-center">
           {navItems.map((item) => (
-            <li key={item.path}>
+            <li key={item.path} className="flex-1 md:flex-none w-full">
               <Link
                 to={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium transition-colors duration-200 group relative ${
+                className={`flex flex-col md:flex-row items-center justify-center md:justify-start px-2 md:px-4 py-2 md:py-3 text-xs md:text-sm font-medium transition-colors duration-200 group relative h-full ${
                   location.pathname === item.path
-                    ? "bg-gray-900 text-white"
+                    ? "bg-gray-900 text-white border-t-2 border-blue-500 md:border-t-0 md:border-l-4"
                     : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="ml-3 hidden md:inline">{item.name}</span>
-                {/* Tooltip for mobile/small screens */}
-                <span className="md:hidden absolute left-16 bg-gray-900 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
+                <span className="text-xl md:text-lg mb-1 md:mb-0">{item.icon}</span>
+                <span className="md:ml-3 text-[10px] md:text-sm">{item.name}</span>
+                
+                {/* Tooltip for desktop only */}
+                <span className="hidden md:group-hover:inline absolute left-36 bg-gray-900 text-white px-2 py-1 rounded text-sm whitespace-nowrap z-50 ml-2">
                   {item.name}
                 </span>
               </Link>

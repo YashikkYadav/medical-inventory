@@ -8,6 +8,10 @@ const {
   deleteService
 } = require('../controllers/serviceController');
 
+const { protect } = require('../middleware/authMiddleware');
+
+router.use(protect);
+
 router.route('/')
   .get(getServices)
   .post(createService);

@@ -112,6 +112,16 @@ const createHospitalBill = asyncHandler(async (req, res) => {
 
   const createdHospitalBill = await hospitalBill.save();
 
+  // Add bill to patient record if patient ID exists
+  if (req.body.patient) {
+      const Patient = require("../models/Patient");
+      const patient = await Patient.findById(req.body.patient);
+      if (patient) {
+          patient.hospitalBills.push(createdHospitalBill._id);
+          await patient.save();
+      }
+  }
+
   // Populate service details before sending response
   const populatedHospitalBill = await HospitalBill.findById(
     createdHospitalBill._id
@@ -214,7 +224,7 @@ const deleteHospitalBill = asyncHandler(async (req, res) => {
     throw new Error("Hospital bill not found");
   }
 
-  await hospitalBill.remove();
+  await hospitalBill.deleteOne();
   res.status(200).json({ message: "Hospital bill removed" });
 });
 

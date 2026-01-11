@@ -8,6 +8,10 @@ const {
   deleteInvoice
 } = require('../controllers/invoiceController');
 
+const { protect } = require('../middleware/authMiddleware');
+
+router.use(protect);
+
 router.route('/')
   .get(getInvoices)
   .post(createInvoice);

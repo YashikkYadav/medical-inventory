@@ -1,6 +1,27 @@
 import React from "react";
+import { ToWords } from 'to-words';
 
-const DetailedHospitalBill = ({ bill }) => {
+const DetailedHospitalBill = ({ bill, advanceDetails = [] }) => {
+  const toWords = new ToWords({
+    localeCode: 'en-IN',
+    converterOptions: {
+      currency: true,
+      ignoreDecimal: false,
+      ignoreZeroCurrency: false,
+      doNotAddOnly: false,
+      currencyOptions: {
+        name: 'Rupee',
+        plural: 'Rupees',
+        symbol: '₹',
+        fractionalUnit: {
+          name: 'Paisa',
+          plural: 'Paise',
+          symbol: '',
+        },
+      },
+    },
+  });
+
   // Helper component for a single row to ensure perfect alignment
   const BillRow = ({ date, desc, rate, qty, amount }) => (
     <div className="flex w-full mb-1 print:mb-0 print:text-[10px]">
@@ -39,87 +60,6 @@ const DetailedHospitalBill = ({ bill }) => {
     return parseFloat(amount).toFixed(2);
   };
 
-  // Convert number to words
-  const numberToWords = (num) => {
-    if (num === 0) return "Zero";
-
-    const ones = [
-      "",
-      "One",
-      "Two",
-      "Three",
-      "Four",
-      "Five",
-      "Six",
-      "Seven",
-      "Eight",
-      "Nine",
-      "Ten",
-      "Eleven",
-      "Twelve",
-      "Thirteen",
-      "Fourteen",
-      "Fifteen",
-      "Sixteen",
-      "Seventeen",
-      "Eighteen",
-      "Nineteen",
-    ];
-
-    const tens = [
-      "",
-      "",
-      "Twenty",
-      "Thirty",
-      "Forty",
-      "Fifty",
-      "Sixty",
-      "Seventy",
-      "Eighty",
-      "Ninety",
-    ];
-
-    const convertHundreds = (n) => {
-      let str = "";
-      if (n > 99) {
-        str += ones[Math.floor(n / 100)] + " Hundred";
-        n %= 100;
-        if (n > 0) str += " ";
-      }
-      if (n > 19) {
-        str += tens[Math.floor(n / 10)];
-        n %= 10;
-        if (n > 0) str += " " + ones[n];
-      } else if (n > 0) {
-        str += ones[n];
-      }
-      return str;
-    };
-
-    if (num >= 10000000) {
-      return "Amount too large";
-    }
-
-    let result = "";
-    if (num >= 100000) {
-      // lakhs
-      result += convertHundreds(Math.floor(num / 100000)) + " Lakh";
-      num %= 100000;
-      if (num > 0) result += " ";
-    }
-    if (num >= 1000) {
-      // thousands
-      result += convertHundreds(Math.floor(num / 1000)) + " Thousand";
-      num %= 1000;
-      if (num > 0) result += " ";
-    }
-    if (num > 0) {
-      result += convertHundreds(num);
-    }
-
-    return result;
-  };
-
   // Group services by date for detailed view
   const groupServicesByDate = (services) => {
     if (!services || !Array.isArray(services)) return {};
@@ -153,8 +93,14 @@ const DetailedHospitalBill = ({ bill }) => {
       0
     ) || 0;
   const discountAmount = parseFloat(bill.discount) || 0;
-  const advanceAmount = parseFloat(bill.advanceAmount) || 0;
-  const balanceAmount = totalServiceAmount - discountAmount - advanceAmount;
+  
+  // Calculate advance from prop OR bill
+  const calculatedAdvance = advanceDetails.reduce((sum, adv) => sum + (parseFloat(adv.totalAmount) || parseFloat(adv.amount) || 0), 0);
+  const advanceAmount = calculatedAdvance > 0 ? calculatedAdvance : (parseFloat(bill.advanceAmount) || 0);
+  
+  const balanceAmount = totalServiceAmount - discountAmount - advanceAmount + (parseFloat(bill.tax)||0); 
+  const isNegativeBalance = balanceAmount < 0;
+  const absBalance = Math.abs(balanceAmount);
 
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center p-4 font-mono text-[11px] text-gray-700 leading-none tracking-tight print:min-h-0 print:p-0 print:m-0">
@@ -162,7 +108,7 @@ const DetailedHospitalBill = ({ bill }) => {
         {/* --- HEADER --- */}
         <div className="flex flex-col items-center mb-6 text-center print:mb-4">
           <h1 className="text-sm font-bold uppercase tracking-wider text-gray-600 print:text-[10px]">
-            Medicare Hospital
+             Medicare Hospital
           </h1>
           <p className="uppercase mt-1 print:text-[9px]">
             Khawa Rani ji, Jamwa Ramgarh ,Jaipur 303109(Raj)
@@ -302,8 +248,8 @@ const DetailedHospitalBill = ({ bill }) => {
 
               {/* Balance */}
               <div className="flex justify-between font-bold text-sm print:text-xs">
-                <span>Balance to be paid by Patient</span>
-                <span>{formatCurrency(balanceAmount)}</span>
+                <span>{isNegativeBalance ? "Balance to be paid TO Patient" : "Balance to be paid by Patient"}</span>
+                <span>{formatCurrency(absBalance)}</span>
               </div>
 
               {/* Divider */}
@@ -314,13 +260,13 @@ const DetailedHospitalBill = ({ bill }) => {
           {/* Amount in Words */}
           <div className="mt-4 mb-4 print:mt-2 print:mb-2">
             <p className="uppercase">
-              : (Rs. {numberToWords(balanceAmount)} Only)
+              : ({toWords.convert(absBalance)})
             </p>
             <div className="border-b border-dashed border-gray-400 w-full mt-1"></div>
           </div>
 
           {/* Advance Details Table */}
-          {bill.advanceDetails && bill.advanceDetails.length > 0 && (
+          {(advanceDetails.length > 0 || (bill.advanceDetails && bill.advanceDetails.length > 0)) && (
             <div className="mb-8 print:mb-6">
               <h3 className="font-bold mb-1 text-gray-600">Advance Details</h3>
               <div className="w-full">
@@ -332,14 +278,14 @@ const DetailedHospitalBill = ({ bill }) => {
                   <div className="w-[20%]">Cheque No.</div>
                   <div className="w-[25%]">Bank Name</div>
                 </div>
-                {bill.advanceDetails.map((adv, idx) => (
+                {(advanceDetails.length > 0 ? advanceDetails : bill.advanceDetails).map((adv, idx) => (
                   <div key={idx} className="flex text-gray-700">
-                    <div className="w-[15%]">{adv.receiptNo}</div>
-                    <div className="w-[15%]">{formatDate(adv.date)}</div>
+                    <div className="w-[15%]">{adv.billNo || adv._id?.substring(0,8)}</div>
+                    <div className="w-[15%]">{formatDate(adv.createdAt || adv.date)}</div>
                     <div className="w-[15%] text-right pr-4">
-                      {formatCurrency(adv.amount)}
+                      {formatCurrency(adv.totalAmount || adv.amount)}
                     </div>
-                    <div className="w-[10%]">{adv.mode}</div>
+                    <div className="w-[10%]">{adv.paymentMode || adv.mode}</div>
                     <div className="w-[20%]">{adv.chequeNo || "-"}</div>
                     <div className="w-[25%]">{adv.bankName || "-"}</div>
                   </div>

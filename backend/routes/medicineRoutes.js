@@ -8,6 +8,10 @@ const {
   deleteMedicine
 } = require('../controllers/medicineController');
 
+const { protect } = require('../middleware/authMiddleware');
+
+router.use(protect);
+
 router.route('/')
   .get(getMedicines)
   .post(createMedicine);
