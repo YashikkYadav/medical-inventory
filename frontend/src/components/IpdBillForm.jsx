@@ -8,6 +8,7 @@ const IpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
   const [formData, setFormData] = useState({
     patientId: patient?._id || "",
     ipdNo: "",
+    billDate: new Date().toISOString().split("T")[0],
     consultantName: "",
     paymentMode: "Cash",
     remarks: "",
@@ -26,6 +27,7 @@ const IpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
       setFormData({
         patientId: initialData.patient?._id || initialData.patient || patient?._id,
         ipdNo: initialData.ipdNo || "",
+        billDate: initialData.billDate ? initialData.billDate.split("T")[0] : new Date().toISOString().split("T")[0],
         consultantName: initialData.consultantName || "",
         paymentMode: initialData.paymentMode || "Cash",
         remarks: initialData.remarks || "",
@@ -116,10 +118,6 @@ const IpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.ipdNo) {
-      toast.error("IPD Number is required");
-      return;
-    }
     if (!formData.consultantName) {
       toast.error("Consultant Name is required");
       return;
@@ -173,15 +171,14 @@ const IpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">IPD Number <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Receipt No. (Optional)</label>
               <input
                 type="text"
                 name="ipdNo"
                 value={formData.ipdNo}
                 onChange={handleChange}
                 className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                placeholder="Enter IPD No"
-                required
+                placeholder="Leave blank to auto-generate"
               />
             </div>
 
@@ -210,6 +207,18 @@ const IpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
                 <option value="UPI">UPI</option>
                 <option value="Card">Card</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bill Date</label>
+              <input
+                type="date"
+                name="billDate"
+                value={formData.billDate}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                required
+              />
             </div>
           </div>
 

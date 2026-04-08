@@ -73,6 +73,7 @@ const ViewMedicalBill = () => {
     phone: bill.customerContact,
     age: bill.patientAge || "",
     sex: bill.patientSex || "",
+    doctorName: bill.doctorName || "",
   };
 
   // Transform charges to match the expected format

@@ -10,6 +10,10 @@ const medicalBillSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    doctorName: {
+      type: String,
+      required: false,
+    },
     patientAge: {
       type: String,
       required: false,

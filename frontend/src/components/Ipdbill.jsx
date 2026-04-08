@@ -85,7 +85,7 @@ const Ipdbill = ({ bill, patient, onClose }) => {
                   <div className="grid grid-cols-[85px_10px_1fr]">
                     <span>Reg. No</span> <span>:</span>{" "}
                     <span>{patient.patientId}</span>
-                    <span>IPD No</span> <span>:</span> <span>{bill.ipdNo}</span>
+                    <span>Receipt No</span> <span>:</span> <span>{bill.ipdNo}</span>
                     <span className="self-start">Name</span>{" "}
                     <span className="self-start">:</span>
                     <span className="uppercase">{patient.name}</span>
@@ -96,15 +96,19 @@ const Ipdbill = ({ bill, patient, onClose }) => {
                 <div className="w-[45%]">
                   <div className="grid grid-cols-[75px_10px_1fr]">
                     <span>Date</span> <span>:</span>{" "}
-                    <span>{formatDate(bill.createdAt)}</span>
+                    <span>{formatDate(bill.billDate || bill.createdAt)}</span>
                     <span>Category</span> <span>:</span> <span>CASH</span>
                     <span>Mob No</span> <span>:</span>{" "}
                     <span>{patient.phoneNumber}</span>
-                    <span className="self-start">Consultant</span>{" "}
-                    <span className="self-start">:</span>{" "}
-                    <span className="uppercase leading-tight text-right">
-                      {bill.consultantName}
-                    </span>
+                    {bill.consultantName && (
+                      <>
+                        <span className="self-start">Consultant</span>{" "}
+                        <span className="self-start">:</span>{" "}
+                        <span className="uppercase leading-tight">
+                          {bill.consultantName}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

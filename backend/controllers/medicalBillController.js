@@ -33,6 +33,7 @@ const createMedicalBill = asyncHandler(async (req, res) => {
   const {
     customerName,
     customerContact,
+    doctorName,
     patientAge,
     patientSex,
     patientAddress,
@@ -78,6 +79,7 @@ const createMedicalBill = asyncHandler(async (req, res) => {
   const medicalBill = new MedicalBill({
     customerName,
     customerContact,
+    doctorName,
     patientAge,
     patientSex,
     patientAddress,
@@ -110,6 +112,7 @@ const updateMedicalBill = asyncHandler(async (req, res) => {
   const {
     customerName,
     customerContact,
+    doctorName,
     patientAge,
     patientSex,
     patientAddress,
@@ -194,6 +197,7 @@ const updateMedicalBill = asyncHandler(async (req, res) => {
 
   medicalBill.customerName = customerName || medicalBill.customerName;
   medicalBill.customerContact = customerContact || medicalBill.customerContact;
+  medicalBill.doctorName = doctorName !== undefined ? doctorName : medicalBill.doctorName;
   medicalBill.patientAge =
     patientAge !== undefined ? patientAge : medicalBill.patientAge;
   medicalBill.patientSex =

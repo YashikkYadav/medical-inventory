@@ -96,8 +96,12 @@ const Opdbill = ({ bill, patient, onClose }) => {
                     </span>
                     <span>Age</span> <span>:</span>{" "}
                     <span>{patient.age ? `${patient.age} Years` : "N/A"}</span>
-                    <span>Consultant</span> <span>:</span>{" "}
-                    <span className="uppercase">{bill.consultantName}</span>
+                    {bill.consultantName && (
+                      <>
+                        <span>Consultant</span> <span>:</span>{" "}
+                        <span className="uppercase">{bill.consultantName}</span>
+                      </>
+                    )}
                     <span className="self-start">Address</span>{" "}
                     <span className="self-start">:</span>
                     <span className="uppercase">{patient.address}</span>
@@ -108,7 +112,7 @@ const Opdbill = ({ bill, patient, onClose }) => {
                 <div className="col-span-5">
                   <div className="grid grid-cols-[70px_10px_1fr]">
                     <span>Date</span> <span>:</span>{" "}
-                    <span>{formatDate(bill.createdAt)}</span>
+                    <span>{formatDate(bill.billDate || bill.createdAt)}</span>
                     <span>Category</span> <span>:</span>{" "}
                     <span>{bill.caseType || "Opd"}</span>
                     <span>&nbsp;</span>

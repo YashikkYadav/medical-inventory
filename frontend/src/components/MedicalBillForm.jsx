@@ -25,6 +25,7 @@ const MedicalBillForm = ({ onClose, onBillCreated }) => {
   const [medicalBillForm, setMedicalBillForm] = useState({
     customerName: "",
     customerContact: "",
+    doctorName: "",
     patientAge: "",
     patientSex: "",
     patientAddress: "",
@@ -270,6 +271,7 @@ const MedicalBillForm = ({ onClose, onBillCreated }) => {
       const medicalBillData = {
         customerName: medicalBillForm.customerName,
         customerContact: medicalBillForm.customerContact,
+        doctorName: medicalBillForm.doctorName,
         patientAge: medicalBillForm.patientAge,
         patientSex: medicalBillForm.patientSex,
         patientAddress: medicalBillForm.patientAddress,
@@ -344,6 +346,20 @@ const MedicalBillForm = ({ onClose, onBillCreated }) => {
               onChange={handleMedicalFormChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Doctor Name
+            </label>
+            <input
+              type="text"
+              name="doctorName"
+              value={medicalBillForm.doctorName}
+              onChange={handleMedicalFormChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter doctor name"
             />
           </div>
 

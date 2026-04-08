@@ -9,6 +9,7 @@ const OpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
     patientId: patient?._id || "",
     billNo: "",
     caseType: "New Case",
+    billDate: new Date().toISOString().split("T")[0],
     consultantName: "",
     paymentMode: "Cash",
     remarks: "",
@@ -28,6 +29,7 @@ const OpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
         patientId: initialData.patient?._id || initialData.patient || patient?._id,
         billNo: initialData.billNo || "",
         caseType: initialData.caseType || "New Case",
+        billDate: initialData.billDate ? initialData.billDate.split("T")[0] : new Date().toISOString().split("T")[0],
         consultantName: initialData.consultantName || "",
         paymentMode: initialData.paymentMode || "Cash",
         remarks: initialData.remarks || "",
@@ -195,6 +197,18 @@ const OpdBillForm = ({ patient, onClose, onSuccess, isEdit, initialData }) => {
                 <option value="Follow Up">Follow Up</option>
                 <option value="Emergency">Emergency</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bill Date</label>
+              <input
+                type="date"
+                name="billDate"
+                value={formData.billDate}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                required
+              />
             </div>
 
             <div>

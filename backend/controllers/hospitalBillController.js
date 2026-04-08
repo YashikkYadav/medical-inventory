@@ -39,8 +39,10 @@ const createHospitalBill = asyncHandler(async (req, res) => {
     consultantName,
     admitDate,
     dischargeDate,
+    billDate,
     ipdNo,
     patientRegistration,
+    receiptNo,
     services,
     discount = 0,
     tax = 0,
@@ -98,8 +100,10 @@ const createHospitalBill = asyncHandler(async (req, res) => {
     consultantName,
     admitDate,
     dischargeDate,
+    billDate,
     ipdNo,
     patientRegistration,
+    receiptNo,
     services,
     totalAmount,
     discount,
@@ -143,8 +147,10 @@ const updateHospitalBill = asyncHandler(async (req, res) => {
     consultantName,
     admitDate,
     dischargeDate,
+    billDate,
     ipdNo,
     patientRegistration,
+    receiptNo,
     services,
     discount,
     tax,
@@ -190,9 +196,11 @@ const updateHospitalBill = asyncHandler(async (req, res) => {
     consultantName !== undefined ? consultantName : hospitalBill.consultantName;
   hospitalBill.admitDate = admitDate || hospitalBill.admitDate;
   hospitalBill.dischargeDate = dischargeDate || hospitalBill.dischargeDate;
+  hospitalBill.billDate = billDate || hospitalBill.billDate;
   hospitalBill.ipdNo = ipdNo || hospitalBill.ipdNo;
   hospitalBill.patientRegistration =
     patientRegistration || hospitalBill.patientRegistration;
+  hospitalBill.receiptNo = receiptNo || hospitalBill.receiptNo;
   hospitalBill.services = services || hospitalBill.services;
   hospitalBill.totalAmount = totalAmount;
   hospitalBill.discount =

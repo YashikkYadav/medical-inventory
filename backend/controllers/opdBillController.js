@@ -10,10 +10,12 @@ const createOpdBill = asyncHandler(async (req, res) => {
       patientId, 
       consultantName, 
       caseType,
+      billDate,
       services, 
       totalAmount, 
       paymentMode, 
-      remarks 
+      remarks,
+      billNo: manualBillNo
   } = req.body;
 
   if (!patientId || !services || services.length === 0) {
@@ -21,10 +23,14 @@ const createOpdBill = asyncHandler(async (req, res) => {
     throw new Error("Patient ID and services are required");
   }
 
+  const billNo = manualBillNo || ("OPD" + Date.now());
+
   const bill = await OpdBill.create({
     patient: patientId,
+    billNo,
     consultantName,
     caseType,
+    billDate,
     services,
     totalAmount,
     paymentMode,
@@ -71,13 +77,15 @@ const getOpdBillById = asyncHandler(async (req, res) => {
 // @route   PUT /api/opd-bills/:id
 // @access  Private
 const updateOpdBill = asyncHandler(async (req, res) => {
-  const { consultantName, caseType, services, totalAmount, paymentMode, remarks } = req.body;
+  const { consultantName, caseType, billDate, services, totalAmount, paymentMode, remarks, billNo } = req.body;
 
   const bill = await OpdBill.findById(req.params.id);
 
   if (bill) {
     bill.consultantName = consultantName || bill.consultantName;
     bill.caseType = caseType || bill.caseType;
+    bill.billDate = billDate || bill.billDate;
+    bill.billNo = billNo || bill.billNo;
     bill.services = services || bill.services;
     bill.totalAmount = totalAmount || bill.totalAmount;
     bill.paymentMode = paymentMode || bill.paymentMode;

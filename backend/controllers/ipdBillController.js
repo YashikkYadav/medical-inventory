@@ -10,6 +10,7 @@ const createIpdBill = asyncHandler(async (req, res) => {
       patientId, 
       ipdNo,
       consultantName, 
+      billDate,
       particulars,
       totalAmount, 
       paymentMode, 
@@ -21,10 +22,13 @@ const createIpdBill = asyncHandler(async (req, res) => {
     throw new Error("Patient ID and particulars are required");
   }
 
+  const finalIpdNo = ipdNo || ("IPD" + Date.now());
+
   const bill = await IpdBill.create({
     patient: patientId,
-    ipdNo,
+    ipdNo: finalIpdNo,
     consultantName,
+    billDate,
     particulars,
     totalAmount,
     paymentMode,
@@ -71,13 +75,14 @@ const getIpdBillById = asyncHandler(async (req, res) => {
 // @route   PUT /api/ipd-bills/:id
 // @access  Private
 const updateIpdBill = asyncHandler(async (req, res) => {
-  const { ipdNo, consultantName, particulars, totalAmount, paymentMode, remarks } = req.body;
+  const { ipdNo, consultantName, billDate, particulars, totalAmount, paymentMode, remarks } = req.body;
 
   const bill = await IpdBill.findById(req.params.id);
 
   if (bill) {
     bill.ipdNo = ipdNo || bill.ipdNo;
     bill.consultantName = consultantName || bill.consultantName;
+    bill.billDate = billDate || bill.billDate;
     bill.particulars = particulars || bill.particulars;
     bill.totalAmount = totalAmount || bill.totalAmount;
     bill.paymentMode = paymentMode || bill.paymentMode;

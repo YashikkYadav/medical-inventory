@@ -113,6 +113,12 @@ const HospitalBill = ({ bill, advanceDetails = [] }) => {
               <span className="w-24">Bill No.</span>
               <span>: &nbsp; {bill._id?.substring(0, 8) || "N/A"}</span>
             </div>
+            {bill.receiptNo && (
+              <div className="flex">
+                <span className="w-24">Receipt No.</span>
+                <span>: &nbsp; {bill.receiptNo}</span>
+              </div>
+            )}
             <div className="flex">
               <span className="w-24">Name</span>
               <span>: &nbsp; {bill.customerName || "N/A"}</span>
@@ -146,7 +152,7 @@ const HospitalBill = ({ bill, advanceDetails = [] }) => {
           <div className="w-[45%] space-y-1 pl-4">
             <div className="flex">
               <span className="w-20">Bill Date</span>
-              <span>: &nbsp; {formatDate(bill.createdAt)}</span>
+              <span>: &nbsp; {formatDate(bill.billDate || bill.createdAt)}</span>
             </div>
             {bill.admitDate && (
               <div className="flex">

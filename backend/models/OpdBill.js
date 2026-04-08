@@ -18,6 +18,9 @@ const opdBillSchema = new mongoose.Schema(
     consultantName: {
       type: String, 
     },
+    billDate: {
+      type: Date,
+    },
     date: {
       type: Date,
       default: Date.now,

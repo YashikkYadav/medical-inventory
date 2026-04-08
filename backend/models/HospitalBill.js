@@ -10,6 +10,10 @@ const hospitalBillSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    receiptNo: {
+      type: String,
+      required: false,
+    },
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
@@ -36,6 +40,10 @@ const hospitalBillSchema = new mongoose.Schema(
       required: false,
     },
     dischargeDate: {
+      type: Date,
+      required: false,
+    },
+    billDate: {
       type: Date,
       required: false,
     },

@@ -18,8 +18,10 @@ const HospitalBillForm = ({ onClose, onBillCreated }) => {
     consultantName: "",
     admitDate: "",
     dischargeDate: "",
+    billDate: new Date().toISOString().split("T")[0],
     ipdNo: "",
     patientRegistration: "",
+    receiptNo: "",
     discount: 0,
     tax: 0,
     amountInWords: "",
@@ -482,6 +484,20 @@ const HospitalBillForm = ({ onClose, onBillCreated }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Bill Date *
+            </label>
+            <input
+              type="date"
+              name="billDate"
+              value={formData.billDate}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Registration No.
             </label>
             <input
@@ -491,6 +507,20 @@ const HospitalBillForm = ({ onClose, onBillCreated }) => {
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter registration number"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Receipt No.
+            </label>
+            <input
+              type="text"
+              name="receiptNo"
+              value={formData.receiptNo}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter receipt number"
             />
           </div>
 

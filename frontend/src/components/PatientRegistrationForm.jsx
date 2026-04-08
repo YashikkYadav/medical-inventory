@@ -10,6 +10,7 @@ const PatientRegistrationForm = ({ onClose, onSuccess }) => {
     phoneNumber: "",
     sex: "Male",
     address: "",
+    patientId: "",
   });
 
   const handleChange = (e) => {
@@ -33,6 +34,7 @@ const PatientRegistrationForm = ({ onClose, onSuccess }) => {
         phoneNumber: "",
         sex: "Male",
         address: "",
+        patientId: "",
       });
       if (onSuccess) onSuccess();
       if (onClose) onClose();
@@ -109,6 +111,18 @@ const PatientRegistrationForm = ({ onClose, onSuccess }) => {
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
               </select>
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Registration No. (Optional)</label>
+              <input
+                type="text"
+                name="patientId"
+                value={formData.patientId}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="Leave blank to auto-generate"
+              />
             </div>
 
             <div className="md:col-span-2">

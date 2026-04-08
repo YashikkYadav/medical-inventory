@@ -4,7 +4,7 @@ const ipdBillSchema = new mongoose.Schema(
   {
     ipdNo: {
       type: String,
-      required: true,
+      required: false,
     },
     patient: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,6 +14,9 @@ const ipdBillSchema = new mongoose.Schema(
     // Dynamic fields from Ipdbill.jsx
     consultantName: {
       type: String,
+    },
+    billDate: {
+      type: Date,
     },
     date: {
       type: Date,

@@ -24,7 +24,7 @@ const Billing = () => {
 
   // Fetch bills when component mounts or tab changes
   useEffect(() => {
-    console.log("run");
+    // console.log("run");
     fetchBills();
   }, [activeTab]);
 
@@ -389,7 +389,7 @@ const Billing = () => {
                             {bill.customerName}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {formatDate(bill.createdAt)}
+                            {formatDate(bill.billDate || bill.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {(bill.services || []).length}

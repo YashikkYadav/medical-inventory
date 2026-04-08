@@ -5,14 +5,14 @@ const Patient = require("../models/Patient");
 // @route   POST /api/patients
 // @access  Public
 const createPatient = asyncHandler(async (req, res) => {
-  const { name, age, phoneNumber, sex, address } = req.body;
+  const { name, age, phoneNumber, sex, address, patientId: manualPatientId } = req.body;
 
   if (!name) {
     res.status(400);
     throw new Error("Please fill in patient name");
   }
 
-  const patientId = "PAT" + Date.now();
+  const patientId = manualPatientId || ("PAT" + Date.now());
 
   const patient = await Patient.create({
     name,

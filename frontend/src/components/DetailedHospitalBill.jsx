@@ -131,6 +131,9 @@ const DetailedHospitalBill = ({ bill, advanceDetails = [] }) => {
         {/* --- BILL INFO --- */}
         <div className="mb-2 uppercase text-gray-500 print:mb-1 print:text-[9px]">
           BILL NO:{bill._id?.substring(0, 8) || "N/A"}
+          {bill.receiptNo && (
+            <span className="ml-4">RECEIPT NO:{bill.receiptNo}</span>
+          )}
         </div>
 
         {/* --- PATIENT DETAILS --- */}
